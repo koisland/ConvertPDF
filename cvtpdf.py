@@ -28,9 +28,10 @@ def uniq_fname(path, _num_suffix=2):
 
 
 def main(args):
-    cwd = os.getcwd()
-    filename, _ = os.path.splitext(args["path"])
-    pdf_path = os.path.join(cwd, str(args["path"]))
+    output_path = os.getcwd() if args["output"] == "cwd" else args["output"]
+    filename, _ = os.path.splitext(args["input"])
+    pdf_path = os.path.join(os.getcwd(), str(args["input"]))
+    print(pdf_path)
 
     if not os.path.exists(pdf_path):
         print("PDF file doesn't exist.")
@@ -41,7 +42,7 @@ def main(args):
 
     # check if pdf has more than one page. create folder if true and set as dest.
     if multiple_pages := pdf_info.get("Pages") > 1:
-        dest = os.path.join(cwd, filename)
+        dest = os.path.join(output_path, filename)
         print(dest)
 
         # check if dest is unique. otherwise, create new filename.
@@ -51,13 +52,13 @@ def main(args):
         os.mkdir(dest)
     # otherwise, dest is the current working directory.
     else:
-        dest = cwd
+        dest = output_path
 
     # convert pdf images to pil images and loop through and save them as pngs
     imgs = pdf2image.convert_from_path(pdf_path)
     if multiple_pages:
         for i, img in enumerate(imgs, 1):
-            img_path = os.path.join(dest, f'{filename}_{i}.{args["ext"]}')
+            img_path = os.path.join(dest, f'{filename}_{i}.{args["ftype"]}')
             img.save(img_path)
 
         # zip file if desired.
@@ -77,7 +78,7 @@ def main(args):
 
         print(f"Saved to {dest}.")
     else:
-        img_path = os.path.join(dest, f'{filename}{args["ext"]}')
+        img_path = os.path.join(dest, f'{filename}{args["ftype"]}')
 
         # check if img filename is unique and create new one if not.
         img_path = uniq_fname(img_path)
@@ -89,7 +90,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a pdf to images.")
-    parser.add_argument("--path", help="Path to pdf file.")
-    parser.add_argument("--ext", help="Image extension to save as (w/'.' ).", default=".png")
-    parser.add_argument("--zip", help="Zip resulting folder", default="False")
+    parser.add_argument("--input", "-i", help="Path to pdf file.")
+    parser.add_argument("--output", "-o", help="Path to output dir.", default="cwd")
+    parser.add_argument("--ftype", "-f", help="Image file extension to save as.", default=".png")
+    parser.add_argument("--zip", "-z", help="Zip resulting folder?", default="False")
     main(vars(parser.parse_args()))
